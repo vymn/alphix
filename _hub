@@ -1,0 +1,85 @@
+#compdef hub
+
+# CLI Hub completion script for zsh
+# To use this, add it to your fpath or source it in your .zshrc
+
+_hub_commands() {
+    local -a commands
+    commands=(
+        'add:Add a new script to the hub'
+        'remove:Remove a script from the hub'
+        'list:List all registered scripts'
+        'run:Run a registered script'
+        'ps:List background processes'
+        'stop:Stop a background process'
+        'logs:Show logs from a background process'
+        'cleanup:Clean up stopped background processes'
+        'status:Show hub status and statistics'
+        'exec:Execute a command directly'
+    )
+    
+    _describe 'commands' commands
+}
+
+_hub_scripts() {
+    local -a scripts
+    # Get list of registered scripts from hub
+    if command -v hub >/dev/null 2>&1; then
+        scripts=(${(f)"$(hub list 2>/dev/null | tail -n +4 | head -n -1 | awk '{print $2":"$4}')"})
+        _describe 'scripts' scripts
+    fi
+}
+
+_hub_processes() {
+    local -a processes
+    # Get list of background processes
+    if command -v hub >/dev/null 2>&1; then
+        processes=(${(f)"$(hub ps 2>/dev/null | tail -n +4 | head -n -1 | awk '{print $1":"$5}')"})
+        _describe 'processes' processes
+    fi
+}
+
+_hub() {
+    local context state state_descr line
+    typeset -A opt_args
+    
+    _arguments -C \
+        '1: :_hub_commands' \
+        '*::arg:->args'
+    
+    case $state in
+        args)
+            case $words[1] in
+                add)
+                    _arguments \
+                        '1:name:' \
+                        '2:command:_command_names' \
+                        '--description[Description of the script]:description:' \
+                        '--workdir[Working directory]:directory:_directories'
+                    ;;
+                remove|run|stop|logs)
+                    _arguments \
+                        '1:script:_hub_scripts'
+                    ;;
+                run)
+                    _arguments \
+                        '1:script:_hub_scripts' \
+                        '--background[Run in background]'
+                    ;;
+                logs)
+                    _arguments \
+                        '1:process:_hub_processes' \
+                        '--lines[Number of lines]:lines:'
+                    ;;
+                exec)
+                    _arguments \
+                        '1:command:_command_names' \
+                        '--background[Run in background]' \
+                        '--name[Name for background process]:name:'
+                    ;;
+            esac
+            ;;
+    esac
+}
+
+_hub "$@"
