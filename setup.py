@@ -18,7 +18,7 @@ def create_symlink():
     local_bin = Path.home() / ".local" / "bin"
     local_bin.mkdir(parents=True, exist_ok=True)
 
-    symlink_path = local_bin / "hub"
+    symlink_path = local_bin / "alphix"
 
     try:
         if symlink_path.exists():
@@ -39,8 +39,8 @@ def create_symlink():
             else:
                 print(f"Please add {local_bin} to your PATH")
 
-        print("\n🎉 CLI Hub installed successfully!")
-        print("You can now use 'hub' command from anywhere")
+        print("\n🎉 Alphix Hub installed successfully!")
+        print("You can now use 'alphix' command from anywhere")
 
     except (OSError, FileNotFoundError, PermissionError) as e:
         print(f"Error creating symlink: {e}")

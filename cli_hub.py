@@ -19,6 +19,11 @@ from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.prompt import Prompt, Confirm, IntPrompt
 from rich.syntax import Syntax
 from rich import print as rprint
+from rich.live import Live
+from rich.text import Text
+from rich.align import Align
+from rich.layout import Layout
+from rich.spinner import Spinner
 import psutil
 import yaml
 from datetime import datetime
@@ -369,6 +374,111 @@ class CLIHub:
         else:
             console.print("[yellow]No stopped processes to clean up[/yellow]")
 
+    def create_alphix_logo(self, frame: int = 0) -> Panel:
+        """Create animated Alphix logo"""
+        # Different animation frames
+        frames = [
+            # Frame 0: Basic logo
+            """
+   ▄████████  ▄█          ▄███████▄    ▄█    █▄     ▄█  ▀████    ▐████▀
+  ███    ███ ███         ███    ███   ███    ███   ███    ███▌   ████▀ 
+  ███    ███ ███         ███    ███   ███    ███   ███▌    ███  ▐███   
+  ███    ███ ███         ███    ███  ▄███▄▄▄▄███▄▄ ███▌    ▀███▄███▀   
+▀███████████ ███       ▀█████████▀  ▀▀███▀▀▀▀███▀  ███▌    ████▀██▄    
+  ███    ███ ███         ███          ███    ███   ███    ▐███  ▀███   
+  ███    ███ ███▌    ▄   ███          ███    ███   ███   ▄███     ███▄ 
+  ███    █▀  █████▄▄██  ▄████▀        ███    █▀    █▀   ████       ███▄
+             ▀                                                         
+            """,
+        ]
+
+        # Color schemes for different frames
+        colors = ["cyan", "bright_cyan", "blue"]
+
+        logo_text = Text(frames[frame % len(frames)], style=colors[frame % len(colors)])
+
+        # Add subtitle and version
+        subtitle_colors = ["dim", "white", "bright_white"]
+        subtitle = Text(
+            "Alphix — Rule All Your Tools from One Den.",
+            style=subtitle_colors[frame % len(subtitle_colors)],
+        )
+        version_text = Text("v2.0 • Interactive • Smart • Powerful", style="dim")
+
+        # Create the full content by combining all elements
+        full_content = Text()
+        full_content.append(logo_text)
+        full_content.append("\n\n")
+        full_content.append(subtitle)
+        full_content.append("\n")
+        full_content.append(version_text)
+
+        return Panel(
+            Align.center(full_content),
+            title="🐺 Welcome to Alphix",
+            title_align="center",
+            border_style=colors[frame % len(colors)],
+            padding=(1, 2),
+        )
+
+    def show_startup_animation(self):
+        """Show animated startup logo"""
+        # import time
+
+        # with Live(console=console, refresh_per_second=4) as live:
+        # for frame in range(12):  # Show animation for 3 seconds
+        #     live.update(self.create_alphix_logo(frame))
+        #     time.sleep(0.25)
+
+        # Final static logo with loading message
+        final_logo = self.create_alphix_logo(0)
+        console.print(final_logo)
+        console.print()
+
+        # Loading animation
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            console=console,
+        ) as progress:
+            task = progress.add_task("[cyan]Alphix marking territory...", total=100)
+
+            for i in range(100):
+                time.sleep(0.02)  # Fast loading
+                progress.update(task, advance=1)
+
+        console.print()
+        console.print("[bold green]Territory claimed. Alphix is ready![/bold green]")
+        console.print()
+
+    def show_interactive_banner(self):
+        """Show banner for interactive mode"""
+        banner_text = Text.assemble(
+            ("╭─", "bright_blue"),
+            ("─" * 50, "bright_blue"),
+            ("─╮", "bright_blue"),
+            "\n",
+            ("│", "bright_blue"),
+            ("  🎯 ", "yellow"),
+            ("ALPHIX INTERACTIVE MODE", "bold bright_cyan"),
+            ("             │", "bright_blue"),
+            "\n",
+            ("│", "bright_blue"),
+            ("  Type ", "white"),
+            ("'help'", "bold yellow"),
+            (" for commands, ", "white"),
+            ("'exit'", "bold red"),
+            (" to quit        │", "bright_blue"),
+            "\n",
+            ("╰─", "bright_blue"),
+            ("─" * 50, "bright_blue"),
+            ("─╯", "bright_blue"),
+        )
+
+        console.print()
+        console.print(Align.center(banner_text))
+        console.print()
+
     def interactive_add_script(self):
         """Interactive script addition wizard"""
         console.print(Panel("🧙 Script Addition Wizard", style="bold blue"))
@@ -503,12 +613,13 @@ class CLIHub:
 
     def interactive_mode(self):
         """Interactive CLI Hub mode"""
-        console.print(Panel("🎯 CLI Hub Interactive Mode", style="bold blue"))
+        self.show_startup_animation()
+        # console.print(Panel("🎯 CLI Hub Interactive Mode", style="bold blue"))
         console.print("Type 'help' for commands, 'exit' to quit\n")
 
         while True:
             try:
-                command = Prompt.ask("[bold green]hub>[/bold green]").strip().lower()
+                command = Prompt.ask("[bold green]den>[/bold green]").strip().lower()
 
                 if not command:
                     continue
@@ -533,10 +644,10 @@ class CLIHub:
                     else:
                         console.print("[red]Usage: run <script_name>[/red]")
 
-                elif command == "ps":
+                elif command in ["ps", "tracks", "tk", "t"]:
                     self.list_background_processes()
 
-                elif command.startswith("logs "):
+                elif command.startswith("logs ") or command.startswith("scout"):
                     script_name = command[5:].strip()
                     if script_name:
                         lines = IntPrompt.ask("Number of lines", default=20)
@@ -544,7 +655,11 @@ class CLIHub:
                     else:
                         console.print("[red]Usage: logs <script_name>[/red]")
 
-                elif command.startswith("stop "):
+                elif (
+                    command.startswith("stop ")
+                    or command.startswith("kill ")
+                    or command.startswith("hunt ")
+                ):
                     script_name = command[5:].strip()
                     if script_name:
                         self.stop_background_process(script_name)
@@ -554,7 +669,7 @@ class CLIHub:
                 elif command == "status":
                     self._show_status()
 
-                elif command == "cleanup":
+                elif command == "cleanup" or command == "shed":
                     self.cleanup_stopped_processes()
 
                 elif command.startswith("remove "):
@@ -577,6 +692,10 @@ class CLIHub:
                     "status",
                     "cleanup",
                     "remove",
+                    "shed",
+                    "scout",
+                    "kill",
+                    "hunt",
                 ]:
                     # Try to execute as native command
                     console.print(
@@ -604,24 +723,24 @@ class CLIHub:
     def _show_interactive_help(self):
         """Show interactive mode help"""
         help_text = """
-[bold cyan]Available Commands:[/bold cyan]
+    [bold cyan]Available Commands:[/bold cyan]
 
-[yellow]Script Management:[/yellow]
-  list, ls          List all scripts
-  add              Interactive script wizard
-  remove <name>    Remove a script
-  run <name>       Run script interactively
+    [yellow]Script Management:[/yellow]
+      list, ls          List all scripts
+      add              Interactive script wizard
+      remove <name>    Remove a script
+      run <name>       Run script interactively
 
-[yellow]Process Management:[/yellow]
-  ps               List background processes
-  stop <name>      Stop background process
-  logs <name>      View process logs
-  cleanup          Clean stopped processes
+    [yellow]Process Management:[/yellow]
+      ps               List background processes
+      stop, kill <name>      Stop background process
+      logs, scout <name>      View process logs
+      cleanup, shed    Clean stopped processes
 
-[yellow]General:[/yellow]
-  status           Show hub status
-  help             Show this help
-  exit, quit, q    Exit interactive mode
+    [yellow]General:[/yellow]
+      status           Show hub status
+      help             Show this help
+      exit, quit, q    Exit interactive mode
         """
         console.print(Panel(help_text, title="Help", border_style="blue"))
 
@@ -654,7 +773,8 @@ hub = CLIHub()
 
 @click.group()
 def cli():
-    """CLI Hub - Central management for your command-line applications"""
+    """Alphix - Central management for your command-line applications"""
+    # hub.interactive_mode()
     pass
 
 
@@ -745,7 +865,7 @@ def status():
     )
 
     panel_content = f"""
-[bold cyan]CLI Hub Status[/bold cyan]
+[bold cyan]Alphix Den Status[/bold cyan]
 
 [green]Scripts registered:[/green] {scripts_count}
 [blue]Background processes:[/blue] {len(hub.processes)}
@@ -786,7 +906,7 @@ def irun(name):
 
 
 @cli.command()
-def interactive():
+def i():
     """Launch interactive CLI Hub mode"""
     hub.interactive_mode()
 
